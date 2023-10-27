@@ -179,11 +179,38 @@ void ModifyFilmList(FILE *fptr)
                         fflush(stdin);
                         if(confirm == 'y')
                         {
-                            printf("FEATURE NOT IMPLEMENTED YET\n");
-                            /*film.index = -1;
-                            fseek(fptr, -sizeof(Film), SEEK_CUR);
-                            fwrite(&film, sizeof(Film), 1, fptr);
-                            printf("Film deleted!\n");*/
+                            fclose(fptr); // Close the file before deleting it
+                            // Open the original file for reading
+                            FILE *fptr = fopen("watchlist.dat", "rb");
+                            if (fptr == NULL) {
+                                printf("Error opening file!");
+                                return;
+                            }
+
+                            // Open a new file for writing
+                            FILE *new_fptr = fopen("new_watchlist.dat", "wb");
+                            if (new_fptr == NULL) {
+                                printf("Error opening file!");
+                                return;
+                            }
+
+                            // Read each film from the original file and write it to the new file
+                            Film film;
+                            while (fread(&film, sizeof(Film), 1, fptr) == 1) {
+                                if (film.index != index) {
+                                    fwrite(&film, sizeof(Film), 1, new_fptr);
+                                }
+                            }
+
+                            // Close both files
+                            fclose(fptr);
+                            fclose(new_fptr);
+
+                            // Delete the original file
+                            remove("watchlist.dat");
+
+                            // Rename the new file to the original file name
+                            rename("new_watchlist.dat", "watchlist.dat");
                         }
                         else
                         {

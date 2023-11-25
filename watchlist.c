@@ -18,6 +18,8 @@ typedef struct
     int index; 
 } Game;
 
+int censor = 0; //1 = true, 0 = false
+
 void OrderByIndex(FILE *fptr)
 {
     Film *films;
@@ -92,7 +94,7 @@ void OrderGamesByIndex(FILE *fptr)
 
 void Wait() //short function to return to the menu
 {
-    printf("\n[press ENTER to return to the selection menu]\n");
+    if(censor != 1) printf("\n[press ENTER to return to the selection menu]\n");
     fflush(stdin);
     getchar(); //Wait for enter key
 }
@@ -297,6 +299,9 @@ int main()
         {
             case 0: 
                 printf("===================================================\nEXITING PROGRAM NOW\n===================================================\n");
+                printf("PRESS ANY KEY\n===================================================\n");
+                censor = 1;
+                Wait();
             break; 
             case 1: 
                 filmFile = fopen("watchlist.txt", "r+b");

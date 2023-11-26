@@ -177,29 +177,34 @@ void ModifyFilmList(FILE *fptr)
                         break;
                     case 3:
                         printf("Are you sure you want to delete this film? (y/n): ");
-                        scanf("%c", &confirm);
+                        scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
                         fflush(stdin);
-                        if(confirm == 'y')
+
+                        if (confirm == 'y') 
                         {
-                            fclose(fptr); // Close the file before deleting it
                             // Open the original file for reading
                             FILE *fptr = fopen("watchlist.dat", "rb");
-                            if (fptr == NULL) {
+                            if (fptr == NULL) 
+                            {
                                 printf("Error opening file!");
                                 return;
                             }
 
                             // Open a new file for writing
                             FILE *new_fptr = fopen("new_watchlist.dat", "wb");
-                            if (new_fptr == NULL) {
+                            if (new_fptr == NULL) 
+                            {
                                 printf("Error opening file!");
+                                fclose(fptr);  // Close the original file before returning
                                 return;
                             }
 
                             // Read each film from the original file and write it to the new file
                             Film film;
-                            while (fread(&film, sizeof(Film), 1, fptr) == 1) {
-                                if (film.index != index) {
+                            while (fread(&film, sizeof(Film), 1, fptr) == 1) 
+                            {
+                                if (film.index != index) 
+                                {
                                     fwrite(&film, sizeof(Film), 1, new_fptr);
                                 }
                             }
@@ -209,26 +214,31 @@ void ModifyFilmList(FILE *fptr)
                             fclose(new_fptr);
 
                             // Delete the original file
-                            remove("watchlist.dat");
+                            if (remove("watchlist.dat") != 0) 
+                            {
+                                printf("Error deleting the original file!\n");
+                                return;
+                            }
 
                             // Rename the new file to the original file name
-                            rename("new_watchlist.dat", "watchlist.dat");
-                        }
-                        else
-                        {
+                            if (rename("new_watchlist.dat", "watchlist.dat") != 0) 
+                            {
+                                printf("Error renaming the new file!\n");
+                                return;
+                            }
+
+                            printf("Film deleted successfully!\n");
+                        } else {
                             printf("Film not deleted!\n");
                         }
                         break;
+
                     default:
                         printf("Invalid option!\n");
                         break;
+
                 }
             }
-            else
-            {
-                printf("Film not modified!\n");
-            }
-            break;
         }
     }
 }
@@ -299,7 +309,7 @@ int main()
         {
             case 0: 
                 printf("===================================================\nEXITING PROGRAM NOW\n===================================================\n");
-                printf("PRESS ANY KEY\n===================================================\n");
+                printf("PRESS ANY KEY TO TERMINATE EXECUTION\n===================================================\n");
                 censor = 1;
                 Wait();
             break; 

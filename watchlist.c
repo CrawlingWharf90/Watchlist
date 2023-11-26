@@ -183,7 +183,7 @@ void ModifyFilmList(FILE *fptr)
                         if (confirm == 'y') 
                         {
                             // Open the original file for reading
-                            FILE *fptr = fopen("watchlist.dat", "rb");
+                            FILE *fptr = fopen("watchlist.txt", "rb");
                             if (fptr == NULL) 
                             {
                                 printf("Error opening file!");
@@ -191,7 +191,7 @@ void ModifyFilmList(FILE *fptr)
                             }
 
                             // Open a new file for writing
-                            FILE *new_fptr = fopen("new_watchlist.dat", "wb");
+                            FILE *new_fptr = fopen("new_watchlist.txt", "wb");
                             if (new_fptr == NULL) 
                             {
                                 printf("Error opening file!");
@@ -214,14 +214,14 @@ void ModifyFilmList(FILE *fptr)
                             fclose(new_fptr);
 
                             // Delete the original file
-                            if (remove("watchlist.dat") != 0) 
+                            if (remove("watchlist.txt") != 0) 
                             {
                                 printf("Error deleting the original file!\n");
                                 return;
                             }
 
                             // Rename the new file to the original file name
-                            if (rename("new_watchlist.dat", "watchlist.dat") != 0) 
+                            if (rename("new_watchlist.txt", "watchlist.txt") != 0) 
                             {
                                 printf("Error renaming the new file!\n");
                                 return;
@@ -309,7 +309,7 @@ int main()
         {
             case 0: 
                 printf("===================================================\nEXITING PROGRAM NOW\n===================================================\n");
-                printf("PRESS ANY KEY TO TERMINATE EXECUTION\n===================================================\n");
+                printf("PRESS ENTER TO TERMINATE EXECUTION\n===================================================\n");
                 censor = 1;
                 Wait();
             break; 

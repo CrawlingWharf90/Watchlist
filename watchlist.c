@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>  // For access() function
 #include <sys/stat.h>  // For stat() function
+#include <sys/types.h>  // For stat() function
+#include <windows.h>
 
 
 #define MAX 40
@@ -170,6 +172,7 @@ void ModifyFilmList(FILE *fptr)
                         fseek(fptr, -sizeof(Film), SEEK_CUR);
                         fwrite(&film, sizeof(Film), 1, fptr);
                         printf("Film name modified!\n");
+                        return; //exit the function
                         break;
                     case 2:
                         printf("Enter the new score: ");
@@ -177,6 +180,7 @@ void ModifyFilmList(FILE *fptr)
                         fseek(fptr, -sizeof(Film), SEEK_CUR);
                         fwrite(&film, sizeof(Film), 1, fptr);
                         printf("Film score modified!\n");
+                        return; //exit the function
                         break;
                     case 3:
                         printf("Are you sure you want to delete this film? (y/n): ");
@@ -217,26 +221,36 @@ void ModifyFilmList(FILE *fptr)
                             fclose(new_fptr);
 
                             // Delete the original file
-                            if (remove("watchlist.txt") != 0) 
-                            {
+                            if (DeleteFile("watchlist.txt") != 0) {
                                 perror("Error deleting the original file");
-                                
+
                                 // Check if the file exists
                                 if (access("watchlist.txt", F_OK) != -1) {
-                                    printf("File exists, but permission denied or in use by another process.\n");
                                     printf("Would you like to change file permissions? (y/n): ");
-                                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
-                                    fflush(stdin);
-                                    if(confirm == 'y')
-                                    {
-                                        chmod("watchlist.txt", 0777);
-                                        printf("File permissions changed successfully!\n");
+                                    scanf(" %c", &confirm); // The space before %c is important to consume the newline character
+
+                                    // Consume extra characters in the input buffer
+                                    int c;
+                                    while ((c = getchar()) != '\n' && c != EOF);
+
+                                    if (confirm == 'y') {
+                                        // Change file permissions to read, write, and execute for the owner
+                                        if (chmod("watchlist.txt", S_IRWXU) == 0) {
+                                            printf("\n\nFile permissions changed successfully.\n\n");
+
+                                            // Try deleting the file again
+                                            if (remove("watchlist.txt") == 0) {
+                                                printf("File deleted successfully.\n");
+                                            } else {
+                                                perror("Error deleting the file after changing permissions");
+                                            }
+                                        } else {
+                                            perror("\n\nError changing file permissions");
+                                        }
                                     }
                                 } else {
                                     printf("File does not exist or other error occurred.\n");
                                 }
-
-                                return;
                             }
 
                             // Rename the new file to the original file name

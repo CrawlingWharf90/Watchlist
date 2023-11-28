@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>  // For access() function
 #include <sys/stat.h>  // For stat() function
 #include <sys/types.h>  // For stat() function
-#include <windows.h>
 
 
 #define MAX 40
@@ -134,142 +134,165 @@ void AddFilmToList(FILE *fptr)
 
 void ModifyFilmList(FILE *fptr)
 {
-    //ask for index
-    int index, choice;
-    printf("Enter the index of the film you want to modify: ");
-    scanf("%d", &index);
-    fflush(stdin);
-    //find the film with that index
-    Film film;
-    while(fread(&film, sizeof(Film), 1, fptr) == 1)
+    int searchBy, index, choice;
+    bool found = false;  
+    Film film; 
+    
+    do
     {
-        if(film.index == index)
+        printf("1. Search movie by index\n2. Search movie by name\n0. Go back\n"); 
+        scanf(" %d", &searchBy); 
+        switch(searchBy)
         {
-            printf("Film found!\n");
-            printf("Name: %s\nScore: %.1f\n", film.name, film.points);
-            printf("Do you want to modify this film? (y/n): ");
-            char confirm;
-            scanf("%c", &confirm);
-            fflush(stdin);
-            if(confirm == 'y')
-            {
-                printf("1. Modify name\n2. Modify score\n3. Delete film\n");
-                scanf("%d", &choice);
+            case 1: 
+                printf("Enter the index of the film you want to modify: ");
+                scanf("%d", &index);
                 fflush(stdin);
-                switch(choice)
+                //find the film with that index
+                while(fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
-                    case 1:
-                        printf("Enter the new name: ");
-                        fgets(film.name, MAX-1, stdin);
-                        for(int i = 0; i < MAX; i++)
-                        {
-                            if(film.name[i] == '\n')
-                            {
-                                film.name[i] = '\0';
-                                break;
-                            }
-                        }
-                        fseek(fptr, -sizeof(Film), SEEK_CUR);
-                        fwrite(&film, sizeof(Film), 1, fptr);
-                        printf("Film name modified!\n");
-                        return; //exit the function
-                        break;
-                    case 2:
-                        printf("Enter the new score: ");
-                        scanf("%f", &film.points);
-                        fseek(fptr, -sizeof(Film), SEEK_CUR);
-                        fwrite(&film, sizeof(Film), 1, fptr);
-                        printf("Film score modified!\n");
-                        return; //exit the function
-                        break;
-                    case 3:
-                        printf("Are you sure you want to delete this film? (y/n): ");
-                        scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
-                        fflush(stdin);
-
-                        if (confirm == 'y') 
-                        {
-                            // Open the original file for reading
-                            FILE *fptr = fopen("watchlist.txt", "rb");
-                            if (fptr == NULL) 
-                            {
-                                printf("Error opening file!");
-                                return;
-                            }
-
-                            // Open a new file for writing
-                            FILE *new_fptr = fopen("new_watchlist.txt", "wb");
-                            if (new_fptr == NULL) 
-                            {
-                                printf("Error opening file!");
-                                fclose(fptr);  // Close the original file before returning
-                                return;
-                            }
-
-                            // Read each film from the original file and write it to the new file
-                            Film film;
-                            while (fread(&film, sizeof(Film), 1, fptr) == 1) 
-                            {
-                                if (film.index != index) 
-                                {
-                                    fwrite(&film, sizeof(Film), 1, new_fptr);
-                                }
-                            }
-
-                            // Close both files
-                            fclose(fptr);
-                            fclose(new_fptr);
-
-                            // Delete the original file
-                            if (DeleteFile("watchlist.txt") != 0) {
-                                perror("Error deleting the original file");
-
-                                // Check if the file exists
-                                if (access("watchlist.txt", F_OK) != -1) {
-                                    printf("Would you like to change file permissions? (y/n): ");
-                                    scanf(" %c", &confirm); // The space before %c is important to consume the newline character
-
-                                    // Consume extra characters in the input buffer
-                                    int c;
-                                    while ((c = getchar()) != '\n' && c != EOF);
-
-                                    if (confirm == 'y') {
-                                        // Change file permissions to read, write, and execute for the owner
-                                        if (chmod("watchlist.txt", S_IRWXU) == 0) {
-                                            printf("\n\nFile permissions changed successfully.\n\n");
-
-                                            // Try deleting the file again
-                                            if (remove("watchlist.txt") == 0) {
-                                                printf("File deleted successfully.\n");
-                                            } else {
-                                                perror("Error deleting the file after changing permissions");
-                                            }
-                                        } else {
-                                            perror("\n\nError changing file permissions");
-                                        }
-                                    }
-                                } else {
-                                    printf("File does not exist or other error occurred.\n");
-                                }
-                            }
-
-                            // Rename the new file to the original file name
-                            if (rename("new_watchlist.txt", "watchlist.txt") != 0) 
-                            {
-                                perror("Error renaming the new file!\n");
-                                return;
-                            }
-
-                            printf("Film deleted successfully!\n");
-                        } else {
-                            printf("Film not deleted!\n");
-                        }
-                        break;
-
-                    default:
-                        printf("Invalid option!\n");
-                        break;
+                    if(film.index == index) found = true; 
                 }
+            break; 
+            case 2: 
+
+            break; 
+            case 0: 
+                Wait(); 
+                return; 
+            break; 
+            default: 
+                printf("Please Insert a Valid Option");
+            break; 
+        }
+    }while(searchBy < 0 || searchBy > 2);
+
+    if(found == true)
+    {
+        printf("Film found!\n");
+        printf("Name: %s\nScore: %.1f\n", film.name, film.points);
+        printf("Do you want to modify this film? (y/n): ");
+        char confirm;
+        scanf("%c", &confirm);
+        fflush(stdin);
+        if(confirm == 'y')
+        {
+            printf("1. Modify name\n2. Modify score\n3. Delete film\n");
+            scanf("%d", &choice);
+            fflush(stdin);
+            switch(choice)
+            {
+                case 1:
+                    printf("Enter the new name: ");
+                    fgets(film.name, MAX-1, stdin);
+                    for(int i = 0; i < MAX; i++)
+                    {
+                        if(film.name[i] == '\n')
+                        {
+                            film.name[i] = '\0';
+                            break;
+                        }
+                    }
+                    fseek(fptr, -sizeof(Film), SEEK_CUR);
+                    fwrite(&film, sizeof(Film), 1, fptr);
+                    printf("Film name modified!\n");
+                    return; //exit the function
+                    break;
+                case 2:
+                    printf("Enter the new score: ");
+                    scanf("%f", &film.points);
+                    fseek(fptr, -sizeof(Film), SEEK_CUR);
+                    fwrite(&film, sizeof(Film), 1, fptr);
+                    printf("Film score modified!\n");
+                    return; //exit the function
+                    break;
+                case 3:
+                    printf("Are you sure you want to delete this film? (y/n): ");
+                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
+                    fflush(stdin);
+
+                    if (confirm == 'y') 
+                    {
+                        // Open the original file for reading
+                        FILE *fptr = fopen("watchlist.txt", "rb");
+                        if (fptr == NULL) 
+                        {
+                            printf("Error opening file!");
+                            return;
+                        }
+
+                        // Open a new file for writing
+                        FILE *new_fptr = fopen("new_watchlist.txt", "wb");
+                        if (new_fptr == NULL) 
+                        {
+                            printf("Error opening file!");
+                            fclose(fptr);  // Close the original file before returning
+                            return;
+                        }
+
+                        // Read each film from the original file and write it to the new file
+                        Film film;
+                        while (fread(&film, sizeof(Film), 1, fptr) == 1) 
+                        {
+                            if (film.index != index) 
+                            {
+                                fwrite(&film, sizeof(Film), 1, new_fptr);
+                            }
+                        }
+
+                        // Close both files
+                        fclose(fptr);
+                        fclose(new_fptr);
+                        // Delete the original file
+                        if (remove("watchlist.txt") != 0) {
+                            perror("Error deleting the original file");
+
+                            // Check if the file exists
+                            if (access("watchlist.txt", F_OK) != -1) {
+                                printf("Would you like to change file permissions? (y/n): ");
+                                scanf(" %c", &confirm); // The space before %c is important to consume the newline character
+
+                                // Consume extra characters in the input buffer
+                                int c;
+                                while ((c = getchar()) != '\n' && c != EOF);
+
+                                if (confirm == 'y') {
+                                    // Change file permissions to read, write, and execute for the owner
+                                    if (chmod("watchlist.txt", S_IRWXU) == 0) {
+                                        printf("\n\nFile permissions changed successfully.\n\n");
+
+                                        // Try deleting the file again
+                                        if (remove("watchlist.txt") == 0) {
+                                            printf("File deleted successfully.\n");
+                                        } else {
+                                            perror("Error deleting the file after changing permissions");
+                                        }
+                                    } else {
+                                        perror("\n\nError changing file permissions");
+                                    }
+                                }
+                            } else {
+                                printf("File does not exist or other error occurred.\n");
+                            }
+                        }
+
+                        // Rename the new file to the original file name
+                        if (rename("new_watchlist.txt", "watchlist.txt") != 0) 
+                        {
+                            perror("Error renaming the new file!\n");
+                            return;
+                        }
+
+                        printf("Film deleted successfully!\n");
+                    } else {
+                        printf("Film not deleted!\n");
+     
+                    }
+                    break;
+
+                default:
+                    printf("Invalid option!\n");
+                    break;
             }
         }
     }
@@ -334,7 +357,7 @@ int main()
 
     do
     {
-        printf("What would you like to do?\n\n1. Check Film List\n2. Add Film to watchlist\n3. Modify Film Score\n\n4. Check Game List\n5. Add Game to game list\n6. Modify Game Score\n\n0. Quit\n");
+        printf("What would you like to do?\n\n1. Check Film List\n2. Add Film to watchlist\n3. Modify Film\n\n4. Check Game List\n5. Add Game to game list\n6. Modify Game\n\n0. Quit\n");
         scanf("%d", &choice);
         fflush(stdin);
         switch(choice)

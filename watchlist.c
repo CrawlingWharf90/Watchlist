@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>  // For access() function
+#include <sys/stat.h>  // For stat() function
+
 
 #define MAX 40
 
@@ -216,14 +219,30 @@ void ModifyFilmList(FILE *fptr)
                             // Delete the original file
                             if (remove("watchlist.txt") != 0) 
                             {
-                                printf("Error deleting the original file!\n");
+                                perror("Error deleting the original file");
+                                
+                                // Check if the file exists
+                                if (access("watchlist.txt", F_OK) != -1) {
+                                    printf("File exists, but permission denied or in use by another process.\n");
+                                    printf("Would you like to change file permissions? (y/n): ");
+                                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
+                                    fflush(stdin);
+                                    if(confirm == 'y')
+                                    {
+                                        chmod("watchlist.txt", 0777);
+                                        printf("File permissions changed successfully!\n");
+                                    }
+                                } else {
+                                    printf("File does not exist or other error occurred.\n");
+                                }
+
                                 return;
                             }
 
                             // Rename the new file to the original file name
                             if (rename("new_watchlist.txt", "watchlist.txt") != 0) 
                             {
-                                printf("Error renaming the new file!\n");
+                                perror("Error renaming the new file!\n");
                                 return;
                             }
 
@@ -236,7 +255,6 @@ void ModifyFilmList(FILE *fptr)
                     default:
                         printf("Invalid option!\n");
                         break;
-
                 }
             }
         }

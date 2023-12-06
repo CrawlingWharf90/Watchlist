@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <unistd.h>  // For access() function
-#include <sys/stat.h>  // For stat() function
-#include <sys/types.h>  // For stat() function
 
 
 #define MAX 40
@@ -33,6 +30,15 @@ int CountElements(FILE *fptr)
     int numFilms = ftell(fptr) / sizeof(Film);
 
     return numFilms;
+}
+
+int CountGames(FILE *fptr)
+{
+    Game *game;
+    fseek(fptr, 0, SEEK_END);
+    int numGames = ftell(fptr) / sizeof(Game);
+
+    return numGames;
 }
 
 void OrderByIndex(FILE *fptr)
@@ -184,13 +190,13 @@ void ModifyFilmList(FILE *fptr)
                 }
                 //Print the films with that name
                 rewind(fptr);
-                printf("Films with that name:\n");
+                /*printf("Films with that name:\n");
                 while(fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
                     if(strcmp(film.name, name) == 0) printf(" %d. %s - Score: %.1f \n", film.index, film.name, film.points);
                 }
                 //find the film with that name
-                rewind(fptr); 
+                rewind(fptr); */
                 while(fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
                     if(strcmp(film.name, name) == 0)
@@ -251,7 +257,7 @@ void ModifyFilmList(FILE *fptr)
                     return; //exit the function
                     break;
                 case 3:
-                    printf("Are you sure you want to delete this film? (y/n): ");
+                    printf("Are you sure you want to delete this film? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
                     scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
                     fflush(stdin);
 
@@ -263,9 +269,9 @@ void ModifyFilmList(FILE *fptr)
                         //write all the films except the one to be deleted to a new array
                         rewind(fptr);
                         int i = 0;
-                        while(fread(&chosenFilm, sizeof(Film), 1, fptr) == 1)
+                        while(fread(&film, sizeof(Film), 1, fptr) == 1)
                         {
-                            if(chosenFilm.index != index)
+                            if(film.index != chosenFilm.index)
                             {
                                 newFilms[i] = film;
                                 i++;
@@ -323,9 +329,162 @@ void AddGameToList(FILE *fptr)
     fwrite(&game, sizeof(Game), 1, fptr);
 }
 
-void ModifyGameList()
+void ModifyGameList(FILE *fptr)
 {
-    printf("FEATURE NOT IMPLEMENTED YET\n");
+    int searchBy, index, choice;
+    char name[MAX];
+    char c; 
+    bool found = false;  
+    Game game, chosenGame; 
+    
+    do
+    {
+        printf("1. Search game by index\n2. Search game by name\n0. Go back\n"); 
+        scanf(" %d", &searchBy); 
+        switch(searchBy)
+        {
+            case 1: 
+                printf("Enter the index of the game you want to modify: ");
+                scanf("%d", &index);
+                fflush(stdin);
+                //find the film with that index
+                while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                {
+                    if(game.index == index)
+                    {
+                        chosenGame = game;
+                        found = true; 
+                    }
+                }
+            break; 
+            case 2: 
+                printf("Enter the name of the game you want to modify: ");
+                fflush(stdin);
+                fgets(name, MAX-1, stdin);
+                for(int i = 0; i < MAX; i++)
+                {
+                    if(name[i] == '\n')
+                    {
+                        name[i] = '\0';
+                        break;
+                    }
+                }
+                //Print the films with that name
+                rewind(fptr);
+                /*printf("Games with that name:\n");
+                while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                {
+                    if(strcmp(game.name, name) == 0) printf(" %d. %s - Score: %.1f \n", game.index, game.name, game.points);
+                }
+                //find the film with that name
+                rewind(fptr);*/ 
+                while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                {
+                    if(strcmp(game.name, name) == 0)
+                    {
+                        chosenGame = game;
+                        found = true;
+                    }
+                }
+                
+            break; 
+            case 0: 
+                Wait(); 
+                return; 
+            break; 
+            default: 
+                printf("Please Insert a Valid Option\n\n");
+            break; 
+        }
+    }while(searchBy < 0 || searchBy > 2);
+
+    if(found == true)
+    {
+        printf("Game found!\n");
+        printf("Name: %s\nScore: %.1f\n", chosenGame.name, chosenGame.points);
+        printf("Do you want to modify this game? (y/n): ");
+        char confirm;
+        scanf("%c", &confirm);
+        fflush(stdin);
+        if(confirm == 'y')
+        {
+            printf("1. Modify name\n2. Modify score\n3. Delete game\n");
+            scanf("%d", &choice);
+            fflush(stdin);
+            switch(choice)
+            {
+                case 1:
+                    printf("Enter the new name: ");
+                    fgets(chosenGame.name, MAX-1, stdin);
+                    for(int i = 0; i < MAX; i++)
+                    {
+                        if(chosenGame.name[i] == '\n')
+                        {
+                            chosenGame.name[i] = '\0';
+                            break;
+                        }
+                    }
+                    fseek(fptr, -sizeof(Game), SEEK_CUR);
+                    fwrite(&chosenGame, sizeof(Game), 1, fptr);
+                    printf("Game name modified!\n");
+                    return; //exit the function
+                    break;
+                case 2:
+                    printf("Enter the new score: ");
+                    scanf("%f", &chosenGame.points);
+                    fseek(fptr, -sizeof(Game), SEEK_CUR);
+                    fwrite(&chosenGame, sizeof(Game), 1, fptr);
+                    printf("Game score modified!\n");
+                    return; //exit the function
+                    break;
+                case 3:
+                    printf("Are you sure you want to delete this game? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
+                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
+                    fflush(stdin);
+
+                    if (confirm == 'y') 
+                    {
+                        //printf("There are %d elements in the file\n", CountElements(fptr));
+                        int numGames = CountGames(fptr);
+                        Game newGames[numGames-1];
+                        //write all the films except the one to be deleted to a new array
+                        rewind(fptr);
+                        int i = 0;
+                        while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                        {
+                            if(game.index != chosenGame.index)
+                            {
+                                newGames[i] = game;
+                                i++;
+                            }
+                        }
+                        //print games array
+                        for(int i = 0; i < numGames-1; i++)
+                        {
+                            printf("%d. %s Score: %.1f\n\n", newGames[i].index, newGames[i].name, newGames[i].points);
+                        }
+                        //write the new array to the file
+                        fclose(fptr);
+                        fptr = fopen("gamelist.txt", "wb");
+                        for(int i = 0; i < numGames-1; i++)
+                        {
+                            newGames[i].index = i+1;
+                            fwrite(&newGames[i], sizeof(Game), 1, fptr);
+                        }
+                        printf("Game deleted!\n");
+                        return; //exit the function
+                    } else {
+                        printf("Game not deleted!\n");
+                    }
+                    break;
+
+                default:
+                    printf("Invalid option!\n");
+                    break;
+            }
+        }
+    }
+    else printf("Game not found!\n");
 }
 
 void CreateFileIfNotExisting(char* filename)
@@ -336,11 +495,11 @@ void CreateFileIfNotExisting(char* filename)
     {
         file = fopen(filename, "wb");
         fclose(file);
-    }
+    } 
     else
     {
         fclose(file);
-    }
+    }   
 }
 
 int main()
@@ -402,7 +561,9 @@ int main()
                 Wait();  
             break; 
             case 6: 
-                ModifyGameList(); 
+                gameFile = fopen("gamelist.txt", "r+b");
+                ModifyGameList(gameFile); 
+                fclose(gameFile);
                 Wait(); 
             break; 
             default:

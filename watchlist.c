@@ -160,24 +160,26 @@ void ModifyFilmList(FILE *fptr)
     {
         printf("1. Search movie by index\n2. Search movie by name\n0. Go back\n"); 
         scanf(" %d", &searchBy); 
-        switch(searchBy)
+        switch (searchBy)
         {
-            case 1: 
-                printf("Enter the index of the film you want to modify: ");
+            case 1:
+                printf("Enter the index of the movie you want to modify: ");
                 scanf("%d", &index);
                 fflush(stdin);
-                //find the film with that index
-                while(fread(&film, sizeof(Film), 1, fptr) == 1)
+                // find the film with that index
+                while (fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
-                    if(film.index == index)
+                    if (film.index == index)
                     {
                         chosenFilm = film;
-                        found = true; 
+                        found = true;
+                        break; // Exit the loop once the film is found
                     }
                 }
-            break; 
-            case 2: 
-                printf("Enter the name of the film you want to modify: ");
+                break;
+
+            case 2:
+                printf("Enter the name of the movie you want to modify: ");
                 fflush(stdin);
                 fgets(name, MAX-1, stdin);
                 for(int i = 0; i < MAX; i++)
@@ -188,32 +190,26 @@ void ModifyFilmList(FILE *fptr)
                         break;
                     }
                 }
-                //Print the films with that name
-                rewind(fptr);
-                /*printf("Films with that name:\n");
-                while(fread(&film, sizeof(Film), 1, fptr) == 1)
+                // find the film with that name
+                rewind(fptr); // Reset the file pointer to the beginning
+                while (fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
-                    if(strcmp(film.name, name) == 0) printf(" %d. %s - Score: %.1f \n", film.index, film.name, film.points);
-                }
-                //find the film with that name
-                rewind(fptr); */
-                while(fread(&film, sizeof(Film), 1, fptr) == 1)
-                {
-                    if(strcmp(film.name, name) == 0)
+                    if (strcmp(film.name, name) == 0)
                     {
                         chosenFilm = film;
                         found = true;
+                        break; // Exit the loop once the film is found
                     }
                 }
-                
-            break; 
-            case 0: 
-                Wait(); 
-                return; 
-            break; 
-            default: 
+                break;
+
+            case 0:
+                Wait();
+                return;
+
+            default:
                 printf("Please Insert a Valid Option\n\n");
-            break; 
+                break;
         }
     }while(searchBy < 0 || searchBy > 2);
 
@@ -233,6 +229,8 @@ void ModifyFilmList(FILE *fptr)
             switch(choice)
             {
                 case 1:
+                    //print chosen film name
+                    printf("Chosen film name: %s\n", chosenFilm.name); 
                     printf("Enter the new name: ");
                     fgets(chosenFilm.name, MAX-1, stdin);
                     for(int i = 0; i < MAX; i++)
@@ -243,15 +241,15 @@ void ModifyFilmList(FILE *fptr)
                             break;
                         }
                     }
-                    fseek(fptr, -sizeof(Film), SEEK_CUR);
+                    fseek(fptr, -sizeof(Film), SEEK_CUR); // Move the file pointer back to the correct position
                     fwrite(&chosenFilm, sizeof(Film), 1, fptr);
                     printf("Film name modified!\n");
                     return; //exit the function
-                    break;
+                    break; 
                 case 2:
                     printf("Enter the new score: ");
                     scanf("%f", &chosenFilm.points);
-                    fseek(fptr, -sizeof(Film), SEEK_CUR);
+                    fseek(fptr, -sizeof(Film), SEEK_CUR); // Move the file pointer back to the correct position
                     fwrite(&chosenFilm, sizeof(Film), 1, fptr);
                     printf("Film score modified!\n");
                     return; //exit the function
@@ -341,23 +339,25 @@ void ModifyGameList(FILE *fptr)
     {
         printf("1. Search game by index\n2. Search game by name\n0. Go back\n"); 
         scanf(" %d", &searchBy); 
-        switch(searchBy)
+        switch (searchBy)
         {
-            case 1: 
+            case 1:
                 printf("Enter the index of the game you want to modify: ");
                 scanf("%d", &index);
                 fflush(stdin);
-                //find the film with that index
-                while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                // find the film with that index
+                while (fread(&game, sizeof(Game), 1, fptr) == 1)
                 {
-                    if(game.index == index)
+                    if (game.index == index)
                     {
                         chosenGame = game;
-                        found = true; 
+                        found = true;
+                        break; // Exit the loop once the film is found
                     }
                 }
-            break; 
-            case 2: 
+                break;
+
+            case 2:
                 printf("Enter the name of the game you want to modify: ");
                 fflush(stdin);
                 fgets(name, MAX-1, stdin);
@@ -369,40 +369,34 @@ void ModifyGameList(FILE *fptr)
                         break;
                     }
                 }
-                //Print the films with that name
-                rewind(fptr);
-                /*printf("Games with that name:\n");
-                while(fread(&game, sizeof(Game), 1, fptr) == 1)
+                // find the film with that name
+                rewind(fptr); // Reset the file pointer to the beginning
+                while (fread(&game, sizeof(Game), 1, fptr) == 1)
                 {
-                    if(strcmp(game.name, name) == 0) printf(" %d. %s - Score: %.1f \n", game.index, game.name, game.points);
-                }
-                //find the film with that name
-                rewind(fptr);*/ 
-                while(fread(&game, sizeof(Game), 1, fptr) == 1)
-                {
-                    if(strcmp(game.name, name) == 0)
+                    if (strcmp(game.name, name) == 0)
                     {
                         chosenGame = game;
                         found = true;
+                        break; // Exit the loop once the film is found
                     }
                 }
-                
-            break; 
-            case 0: 
-                Wait(); 
-                return; 
-            break; 
-            default: 
+                break;
+
+            case 0:
+                Wait();
+                return;
+
+            default:
                 printf("Please Insert a Valid Option\n\n");
-            break; 
+                break;
         }
     }while(searchBy < 0 || searchBy > 2);
 
     if(found == true)
     {
-        printf("Game found!\n");
+        printf("Film found!\n");
         printf("Name: %s\nScore: %.1f\n", chosenGame.name, chosenGame.points);
-        printf("Do you want to modify this game? (y/n): ");
+        printf("Do you want to modify this film? (y/n): ");
         char confirm;
         scanf("%c", &confirm);
         fflush(stdin);
@@ -414,6 +408,8 @@ void ModifyGameList(FILE *fptr)
             switch(choice)
             {
                 case 1:
+                    //print chosen film name
+                    printf("Chosen game name: %s\n", chosenGame.name); 
                     printf("Enter the new name: ");
                     fgets(chosenGame.name, MAX-1, stdin);
                     for(int i = 0; i < MAX; i++)
@@ -424,21 +420,21 @@ void ModifyGameList(FILE *fptr)
                             break;
                         }
                     }
-                    fseek(fptr, -sizeof(Game), SEEK_CUR);
+                    fseek(fptr, -sizeof(Game), SEEK_CUR); // Move the file pointer back to the correct position
                     fwrite(&chosenGame, sizeof(Game), 1, fptr);
                     printf("Game name modified!\n");
                     return; //exit the function
-                    break;
+                    break; 
                 case 2:
                     printf("Enter the new score: ");
                     scanf("%f", &chosenGame.points);
-                    fseek(fptr, -sizeof(Game), SEEK_CUR);
+                    fseek(fptr, -sizeof(Game), SEEK_CUR); // Move the file pointer back to the correct position
                     fwrite(&chosenGame, sizeof(Game), 1, fptr);
                     printf("Game score modified!\n");
                     return; //exit the function
                     break;
                 case 3:
-                    printf("Are you sure you want to delete this game? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
+                    printf("Are you sure you want to delete this film? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
                     scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
                     fflush(stdin);
 
@@ -457,11 +453,6 @@ void ModifyGameList(FILE *fptr)
                                 newGames[i] = game;
                                 i++;
                             }
-                        }
-                        //print games array
-                        for(int i = 0; i < numGames-1; i++)
-                        {
-                            printf("%d. %s Score: %.1f\n\n", newGames[i].index, newGames[i].name, newGames[i].points);
                         }
                         //write the new array to the file
                         fclose(fptr);

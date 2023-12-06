@@ -25,6 +25,16 @@ typedef struct
 
 int censor = 0; //1 = true, 0 = false
 
+int CountElements(FILE *fptr)
+{
+    Film *films;
+    //calculate the number of films in the file with fseek
+    fseek(fptr, 0, SEEK_END);
+    int numFilms = ftell(fptr) / sizeof(Film);
+
+    return numFilms;
+}
+
 void OrderByIndex(FILE *fptr)
 {
     Film *films;
@@ -135,8 +145,10 @@ void AddFilmToList(FILE *fptr)
 void ModifyFilmList(FILE *fptr)
 {
     int searchBy, index, choice;
+    char name[MAX];
+    char c; 
     bool found = false;  
-    Film film; 
+    Film film, chosenFilm; 
     
     do
     {
@@ -151,18 +163,50 @@ void ModifyFilmList(FILE *fptr)
                 //find the film with that index
                 while(fread(&film, sizeof(Film), 1, fptr) == 1)
                 {
-                    if(film.index == index) found = true; 
+                    if(film.index == index)
+                    {
+                        chosenFilm = film;
+                        found = true; 
+                    }
                 }
             break; 
             case 2: 
-
+                printf("Enter the name of the film you want to modify: ");
+                fflush(stdin);
+                fgets(name, MAX-1, stdin);
+                for(int i = 0; i < MAX; i++)
+                {
+                    if(name[i] == '\n')
+                    {
+                        name[i] = '\0';
+                        break;
+                    }
+                }
+                //Print the films with that name
+                rewind(fptr);
+                printf("Films with that name:\n");
+                while(fread(&film, sizeof(Film), 1, fptr) == 1)
+                {
+                    if(strcmp(film.name, name) == 0) printf(" %d. %s - Score: %.1f \n", film.index, film.name, film.points);
+                }
+                //find the film with that name
+                rewind(fptr); 
+                while(fread(&film, sizeof(Film), 1, fptr) == 1)
+                {
+                    if(strcmp(film.name, name) == 0)
+                    {
+                        chosenFilm = film;
+                        found = true;
+                    }
+                }
+                
             break; 
             case 0: 
                 Wait(); 
                 return; 
             break; 
             default: 
-                printf("Please Insert a Valid Option");
+                printf("Please Insert a Valid Option\n\n");
             break; 
         }
     }while(searchBy < 0 || searchBy > 2);
@@ -170,7 +214,7 @@ void ModifyFilmList(FILE *fptr)
     if(found == true)
     {
         printf("Film found!\n");
-        printf("Name: %s\nScore: %.1f\n", film.name, film.points);
+        printf("Name: %s\nScore: %.1f\n", chosenFilm.name, chosenFilm.points);
         printf("Do you want to modify this film? (y/n): ");
         char confirm;
         scanf("%c", &confirm);
@@ -184,25 +228,25 @@ void ModifyFilmList(FILE *fptr)
             {
                 case 1:
                     printf("Enter the new name: ");
-                    fgets(film.name, MAX-1, stdin);
+                    fgets(chosenFilm.name, MAX-1, stdin);
                     for(int i = 0; i < MAX; i++)
                     {
-                        if(film.name[i] == '\n')
+                        if(chosenFilm.name[i] == '\n')
                         {
-                            film.name[i] = '\0';
+                            chosenFilm.name[i] = '\0';
                             break;
                         }
                     }
                     fseek(fptr, -sizeof(Film), SEEK_CUR);
-                    fwrite(&film, sizeof(Film), 1, fptr);
+                    fwrite(&chosenFilm, sizeof(Film), 1, fptr);
                     printf("Film name modified!\n");
                     return; //exit the function
                     break;
                 case 2:
                     printf("Enter the new score: ");
-                    scanf("%f", &film.points);
+                    scanf("%f", &chosenFilm.points);
                     fseek(fptr, -sizeof(Film), SEEK_CUR);
-                    fwrite(&film, sizeof(Film), 1, fptr);
+                    fwrite(&chosenFilm, sizeof(Film), 1, fptr);
                     printf("Film score modified!\n");
                     return; //exit the function
                     break;
@@ -213,80 +257,32 @@ void ModifyFilmList(FILE *fptr)
 
                     if (confirm == 'y') 
                     {
-                        // Open the original file for reading
-                        FILE *fptr = fopen("watchlist.txt", "rb");
-                        if (fptr == NULL) 
+                        //printf("There are %d elements in the file\n", CountElements(fptr));
+                        int numFilms = CountElements(fptr);
+                        Film newFilms[numFilms-1];
+                        //write all the films except the one to be deleted to a new array
+                        rewind(fptr);
+                        int i = 0;
+                        while(fread(&chosenFilm, sizeof(Film), 1, fptr) == 1)
                         {
-                            printf("Error opening file!");
-                            return;
-                        }
-
-                        // Open a new file for writing
-                        FILE *new_fptr = fopen("new_watchlist.txt", "wb");
-                        if (new_fptr == NULL) 
-                        {
-                            printf("Error opening file!");
-                            fclose(fptr);  // Close the original file before returning
-                            return;
-                        }
-
-                        // Read each film from the original file and write it to the new file
-                        Film film;
-                        while (fread(&film, sizeof(Film), 1, fptr) == 1) 
-                        {
-                            if (film.index != index) 
+                            if(chosenFilm.index != index)
                             {
-                                fwrite(&film, sizeof(Film), 1, new_fptr);
+                                newFilms[i] = film;
+                                i++;
                             }
                         }
-
-                        // Close both files
+                        //write the new array to the file
                         fclose(fptr);
-                        fclose(new_fptr);
-                        // Delete the original file
-                        if (remove("watchlist.txt") != 0) {
-                            perror("Error deleting the original file");
-
-                            // Check if the file exists
-                            if (access("watchlist.txt", F_OK) != -1) {
-                                printf("Would you like to change file permissions? (y/n): ");
-                                scanf(" %c", &confirm); // The space before %c is important to consume the newline character
-
-                                // Consume extra characters in the input buffer
-                                int c;
-                                while ((c = getchar()) != '\n' && c != EOF);
-
-                                if (confirm == 'y') {
-                                    // Change file permissions to read, write, and execute for the owner
-                                    if (chmod("watchlist.txt", S_IRWXU) == 0) {
-                                        printf("\n\nFile permissions changed successfully.\n\n");
-
-                                        // Try deleting the file again
-                                        if (remove("watchlist.txt") == 0) {
-                                            printf("File deleted successfully.\n");
-                                        } else {
-                                            perror("Error deleting the file after changing permissions");
-                                        }
-                                    } else {
-                                        perror("\n\nError changing file permissions");
-                                    }
-                                }
-                            } else {
-                                printf("File does not exist or other error occurred.\n");
-                            }
-                        }
-
-                        // Rename the new file to the original file name
-                        if (rename("new_watchlist.txt", "watchlist.txt") != 0) 
+                        fptr = fopen("watchlist.txt", "wb");
+                        for(int i = 0; i < numFilms-1; i++)
                         {
-                            perror("Error renaming the new file!\n");
-                            return;
+                            newFilms[i].index = i+1;
+                            fwrite(&newFilms[i], sizeof(Film), 1, fptr);
                         }
-
-                        printf("Film deleted successfully!\n");
+                        printf("Film deleted!\n");
+                        return; //exit the function
                     } else {
                         printf("Film not deleted!\n");
-     
                     }
                     break;
 
@@ -296,6 +292,7 @@ void ModifyFilmList(FILE *fptr)
             }
         }
     }
+    else printf("Film not found!\n");
 }
 
 void CheckGameList(FILE *fptr)

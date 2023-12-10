@@ -22,6 +22,7 @@ typedef struct
 
 int censor = 0; //1 = true, 0 = false
 
+
 int CountElements(FILE *fptr)
 {
     Film *films;
@@ -113,6 +114,102 @@ void OrderGamesByIndex(FILE *fptr)
 
 }
 
+void ScaleAllMovies(FILE *fptr)
+{
+    int numFilms = CountElements(fptr);
+
+    if (numFilms <= 0)
+    {
+        printf("No films to scale.\n");
+        return;
+    }
+
+    Film *films = (Film *)malloc(numFilms * sizeof(Film));
+    if (films == NULL)
+    {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    // Read all films into the array and find the highest score
+    float highestScore = 0;
+    rewind(fptr);
+    for (int i = 0; i < numFilms; i++)
+    {
+        if (fread(&films[i], sizeof(Film), 1, fptr) == 1)
+        {
+            if (films[i].points > highestScore)
+            {
+                highestScore = films[i].points;
+            }
+        }
+    }
+
+    // Scale all scores in the array
+    for (int i = 0; i < numFilms; i++)
+    {
+        films[i].points = (films[i].points / highestScore) * 100;
+    }
+
+    // Write the modified array back to the file
+    rewind(fptr);
+    for (int i = 0; i < numFilms; i++)
+    {
+        fwrite(&films[i], sizeof(Film), 1, fptr);
+    }
+
+    // Free the allocated memory
+    free(films);
+}
+
+void ScaleAllGames(FILE *fptr)
+{
+    int numGames = CountGames(fptr);
+
+    if (numGames <= 0)
+    {
+        printf("No games to scale.\n");
+        return;
+    }
+
+    Game *games = (Game *)malloc(numGames * sizeof(Game));
+    if (games == NULL)
+    {
+        printf("Memory allocation failed.\n");
+        return;
+    }
+
+    // Read all films into the array and find the highest score
+    float highestScore = 0;
+    rewind(fptr);
+    for (int i = 0; i < numGames; i++)
+    {
+        if (fread(&games[i], sizeof(Game), 1, fptr) == 1)
+        {
+            if (games[i].points > highestScore)
+            {
+                highestScore = games[i].points;
+            }
+        }
+    }
+
+    // Scale all scores in the array
+    for (int i = 0; i < numGames; i++)
+    {
+        games[i].points = (games[i].points / highestScore) * 100;
+    }
+
+    // Write the modified array back to the file
+    rewind(fptr);
+    for (int i = 0; i < numGames; i++)
+    {
+        fwrite(&games[i], sizeof(Game), 1, fptr);
+    }
+
+    // Free the allocated memory
+    free(games);
+}
+
 void Wait() //short function to return to the menu
 {
     if(censor != 1) printf("\n[press ENTER to return to the selection menu]\n");
@@ -150,12 +247,34 @@ void AddFilmToList(FILE *fptr)
 
 void ModifyFilmList(FILE *fptr)
 {
-    int searchBy, index, choice;
+    int searchBy, chooseToModify, index, choice;
     char name[MAX];
     char c; 
     bool found = false;  
     Film film, chosenFilm; 
     
+    do
+    {
+        printf("1. Search and modify sepcific film\n2. Modify all films\n0. Go back\n");
+        scanf(" %d", &chooseToModify);
+        switch (chooseToModify)
+        {
+        case 1: 
+            break;
+        case 2:
+                printf("Scale all movies to be between 0 and 100\n");
+                printf("Are you sure you want to modify all films? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
+                scanf(" %c", &c);  // Note the space before %c to consume the newline character
+                if(c=='y') ScaleAllMovies(fptr); 
+                else printf("Films not modified!\n");
+                return; //exit the function
+            break; 
+        default:
+            printf("Please Insert a Valid Option\n\n");
+            break;
+        }
+    }while(chooseToModify != 1); 
+
     do
     {
         printf("1. Search movie by index\n2. Search movie by name\n0. Go back\n"); 
@@ -329,12 +448,34 @@ void AddGameToList(FILE *fptr)
 
 void ModifyGameList(FILE *fptr)
 {
-    int searchBy, index, choice;
+    int searchBy, chooseToModify, index, choice;
     char name[MAX];
     char c; 
     bool found = false;  
     Game game, chosenGame; 
     
+    do
+    {
+        printf("1. Search and modify sepcific game\n2. Modify all games\n0. Go back\n");
+        scanf(" %d", &chooseToModify);
+        switch (chooseToModify)
+        {
+        case 1: 
+            break;
+        case 2:
+                printf("Scale all game scores to be between 0 and 100\n");
+                printf("Are you sure you want to modify all games? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
+                scanf(" %c", &c);  // Note the space before %c to consume the newline character
+                if(c=='y') ScaleAllGames(fptr); 
+                else printf("Games not modified!\n");
+                return; //exit the function
+            break; 
+        default:
+            printf("Please Insert a Valid Option\n\n");
+            break;
+        }
+    }while(chooseToModify != 1); 
+
     do
     {
         printf("1. Search game by index\n2. Search game by name\n0. Go back\n"); 

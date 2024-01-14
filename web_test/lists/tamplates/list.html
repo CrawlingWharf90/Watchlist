@@ -1,9 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Movie Leaderboard</title>
-    </head>
-    <h1>Leaderboard Page</h1>
-    <h2>This is the Leaderboard page, it will contain the movie/game/song leaderboard in a table, by loading the respective sql db</h2>
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Leaderboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body>
+    <h1>INSERT ELEMENT INTO MOVIE LIST</h1>
+    <form id="insertForm">
+        Name: <input type="text" name="Name" required><br>
+        Notes: <input type="text" name="Description"><br>
+        Score: <input type="number" name="Score" required><br>
+        Add To Watchlist: <input type="number" name="AddToWatchlist"><br>
+        <input type="submit" value="Add Movie">
+    </form>
+
+    <br><br>
+
+    <h1>OUTPUT MOVIE LIST</h1>
+    <div id="output"></div>
+    OUTPUT SHOULD GO HERE
+    <script>
+        $(document).ready(function() {
+            // Handle form submission
+            $("#insertForm").submit(function(event) {
+                event.preventDefault();
+
+                // Get form data
+                var formData = $(this).serialize();
+
+                // Use AJAX to submit data to SQLite
+                $.ajax({
+                    type: "POST",
+                    url: "php/insertMovie.php", 
+                    data: formData,
+                    success: function(response) {
+                        // Refresh the output
+                        fetchMovieList();
+                    }
+                });
+            });
+
+            // Fetch and display the movie list
+            function fetchMovieList() {
+                $.ajax({
+                    type: "GET",
+                    url: "php/fetchMovieList.php",
+                    success: function(response) {
+                        $("#output").html(response);
+                    }
+                });
+            }
+
+            // Initial fetch
+            fetchMovieList();
+        });
+    </script>
+</body>
 </html>

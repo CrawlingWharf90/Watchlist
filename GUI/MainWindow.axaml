@@ -5,5 +5,5 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="GUI.MainWindow"
         Title="GUI">
-    <Button Content="Click me!" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <Button Content="Click me!" HorizontalAlignment="Center" VerticalAlignment="Center" Click="PopUpWindow"/>
 </Window>

@@ -6,13 +6,13 @@
 
 #define MAX 40
 //set colors for the terminal
-/*#define COLOR_RED     "\e[0;31m"
+#define COLOR_RED     "\e[91m"
 #define COLOR_GREEN   "\e[32m"
 #define COLOR_YELLOW  "\e[33m"
 #define COLOR_BLUE    "\e[34m"
 #define COLOR_MAGENTA "\e[35m"
 #define COLOR_CYAN    "\e[36m"
-#define COLOR_RESET   "\e[0m"*/
+#define COLOR_RESET   "\e[0m"
 
 typedef struct
 {
@@ -220,7 +220,7 @@ void ScaleAllGames(FILE *fptr)
 
 void Wait() //short function to return to the menu
 {
-    if(censor != 1) printf(/*COLOR_GREEN*/ "\n[press ENTER to return to the selection menu]\n" /*COLOR_RESET*/);
+    if(censor != 1) printf(COLOR_GREEN "\n[press ENTER to return to the selection menu]\n" COLOR_RESET);
     fflush(stdin);
     getchar(); //Wait for enter key
     system("cls"); //clear the terminal before starting the program
@@ -278,8 +278,12 @@ void ModifyFilmList(FILE *fptr)
                 else printf("Films not modified!\n");
                 return; //exit the function
             break; 
+        case 0:
+            Wait();
+            return;
+            break;
         default:
-            printf("Please Insert a Valid Option\n\n");
+            printf(COLOR_RED "Please Insert a Valid Option\n\n" COLOR_RESET);
             break;
         }
     }while(chooseToModify != 1); 
@@ -337,7 +341,7 @@ void ModifyFilmList(FILE *fptr)
                 return;
 
             default:
-                printf(/*COLOR_RED*/ "Please Insert a Valid Option\n\n" /*COLOR_RESET*/);
+                printf(COLOR_RED "Please Insert a Valid Option\n\n" COLOR_RESET);
                 break;
         }
     }while(searchBy < 0 || searchBy > 2);
@@ -665,7 +669,7 @@ int main()
         {
             case 0: 
                 printf("===================================================\nEXITING PROGRAM NOW\n===================================================\n");
-                printf("PRESS ENTER TO TERMINATE EXECUTION\n===================================================\n");
+                printf(COLOR_MAGENTA "PRESS ENTER TO TERMINATE EXECUTION\n===================================================\n" COLOR_RESET);
                 censor = 1;
                 Wait();
             break; 

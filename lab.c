@@ -17,719 +17,263 @@
 typedef struct
 {
     char name[MAX]; //can be made variable size??
+    char genre[MAX]; //can be made variable size??
     float points; 
     int index; 
 } Film;
 
-typedef struct
-{
-    char name[MAX];
-    float points; 
-    int index; 
-} Game;
-
-typedef struct Title {struct Tiltle *next; char name[MAX]; float points; int index;} Saga; //linked list for the titles of the same Saga
-
-int censor = 0; //1 = true, 0 = false
-
-
-int CountElements(FILE *fptr)
-{
-    Film *films;
-    //calculate the number of films in the file with fseek
-    fseek(fptr, 0, SEEK_END);
-    int numFilms = ftell(fptr) / sizeof(Film);
-
-    return numFilms;
-}
-
-int CountGames(FILE *fptr)
-{
-    Game *game;
-    fseek(fptr, 0, SEEK_END);
-    int numGames = ftell(fptr) / sizeof(Game);
-
-    return numGames;
-}
-
-void OrderByIndex(FILE *fptr)
-{
-    Film *films;
-    //calculate the number of films in the file with fseek
-    fseek(fptr, 0, SEEK_END);
-    int numFilms = ftell(fptr) / sizeof(Film);
-    films = (Film*)malloc(numFilms * sizeof(Film));
-    rewind(fptr);
-    fread(films, sizeof(Film), numFilms, fptr);
-
-    //sort the array of films by index
-    Film temp;
-    for(int i = 0; i < numFilms; i++)
-    {
-        for(int j = 0; j < numFilms; j++)
-        {
-            if(films[i].points > films[j].points)
-            {
-                temp = films[i];
-                films[i] = films[j];
-                films[j] = temp;
-            }
-        }
-    }
-
-    //write the sorted array back to the file
-    rewind(fptr);
-
-    for(int i = 0; i < numFilms; i++)
-    {
-        films[i].index = i+1;
-        fwrite(&films[i], sizeof(Film), 1, fptr);
-    }
-
-}
-
-void OrderGamesByIndex(FILE *fptr)
-{
-    Game *games;
-    //calculate the number of films in the file with fseek
-    fseek(fptr, 0, SEEK_END);
-    int numGames = ftell(fptr) / sizeof(Game);
-    games = (Game*)malloc(numGames * sizeof(Game));
-    rewind(fptr);
-    fread(games, sizeof(Game), numGames, fptr);
-
-    //sort the array of films by index
-    Game temp;
-    for(int i = 0; i < numGames; i++)
-    {
-        for(int j = 0; j < numGames; j++)
-        {
-            if(games[i].points > games[j].points)
-            {
-                temp = games[i];
-                games[i] = games[j];
-                games[j] = temp;
-            }
-        }
-    }
-
-    //write the sorted array back to the file
-    rewind(fptr);
-
-    for(int i = 0; i < numGames; i++)
-    {
-        games[i].index = i+1;
-        fwrite(&games[i], sizeof(Game), 1, fptr);
-    }
-
-}
-
-void ScaleAllMovies(FILE *fptr)
-{
-    int numFilms = CountElements(fptr);
-
-    if (numFilms <= 0)
-    {
-        printf("No films to scale.\n");
-        return;
-    }
-
-    Film *films = (Film *)malloc(numFilms * sizeof(Film));
-    if (films == NULL)
-    {
-        printf("Memory allocation failed.\n");
-        return;
-    }
-
-    // Read all films into the array and find the highest score
-    float highestScore = 0;
-    rewind(fptr);
-    for (int i = 0; i < numFilms; i++)
-    {
-        if (fread(&films[i], sizeof(Film), 1, fptr) == 1)
-        {
-            if (films[i].points > highestScore)
-            {
-                highestScore = films[i].points;
-            }
-        }
-    }
-
-    // Scale all scores in the array
-    for (int i = 0; i < numFilms; i++)
-    {
-        films[i].points = (films[i].points / highestScore) * 100;
-    }
-
-    // Write the modified array back to the file
-    rewind(fptr);
-    for (int i = 0; i < numFilms; i++)
-    {
-        fwrite(&films[i], sizeof(Film), 1, fptr);
-    }
-
-    // Free the allocated memory
-    free(films);
-}
-
-void ScaleAllGames(FILE *fptr)
-{
-    int numGames = CountGames(fptr);
-
-    if (numGames <= 0)
-    {
-        printf("No games to scale.\n");
-        return;
-    }
-
-    Game *games = (Game *)malloc(numGames * sizeof(Game));
-    if (games == NULL)
-    {
-        printf("Memory allocation failed.\n");
-        return;
-    }
-
-    // Read all films into the array and find the highest score
-    float highestScore = 0;
-    rewind(fptr);
-    for (int i = 0; i < numGames; i++)
-    {
-        if (fread(&games[i], sizeof(Game), 1, fptr) == 1)
-        {
-            if (games[i].points > highestScore)
-            {
-                highestScore = games[i].points;
-            }
-        }
-    }
-
-    // Scale all scores in the array
-    for (int i = 0; i < numGames; i++)
-    {
-        games[i].points = (games[i].points / highestScore) * 100;
-    }
-
-    // Write the modified array back to the file
-    rewind(fptr);
-    for (int i = 0; i < numGames; i++)
-    {
-        fwrite(&games[i], sizeof(Game), 1, fptr);
-    }
-
-    // Free the allocated memory
-    free(games);
-}
-
-void Wait() //short function to return to the menu
-{
-    if(censor != 1) printf(COLOR_GREEN "\n[press ENTER to return to the selection menu]\n" COLOR_RESET);
-    fflush(stdin);
-    getchar(); //Wait for enter key
-    system("cls"); //clear the terminal before starting the program
-}
-
-void CheckFilmList(FILE *fptr)
+typedef struct FilmNode 
 {
     Film film;
-    while(fread(&film, sizeof(Film), 1, fptr) == 1)
+    struct FilmNode* next;
+} FilmNode;
+
+typedef struct Saga //a saga is a list of films, a saga can also be made of a single film
+{
+    FilmNode* films;
+    int score; //score of the saga as the average of the scores of the films in the saga
+    char name[MAX]; //name of the saga
+    int index; //index of the saga in the list
+    struct Saga* next;
+} Saga;
+
+typedef struct SagaList 
+{
+    Saga* head;
+} SagaList;
+
+int CountSagas(SagaList sagaList) //count how many sagas are in the list
+{
+    int count = 0;
+    Saga* currentSaga = sagaList.head;
+    while (currentSaga != NULL) 
     {
-        printf("%d. %s\nScore: %.1f\n\n", film.index, film.name, film.points);
+        count++;
+        currentSaga = currentSaga->next;
     }
+    return count;
 }
 
-void AddFilmToList(FILE *fptr)
+int CountFilmsInSaga(Saga saga) //count how many Films are in each saga
 {
-    Film film; 
-    printf("Enter the name of the film: ");
-    fgets(film.name, MAX-1, stdin);
-    for(int i = 0; i < MAX; i++)
+    int count = 0;
+    FilmNode* currentFilm = saga.films;
+    while (currentFilm != NULL) 
     {
-        if(film.name[i] == '\n')
-        {
-            film.name[i] = '\0';
-            break;
-        }
+        count++;
+        currentFilm = currentFilm->next;
     }
-    printf("Enter the score of the film: ");
-    scanf("%f", &film.points);
-    //fprintf(fptr, "%s %f\n", film.name, film.points);
-    fwrite(&film, sizeof(Film), 1, fptr);
+
+    return count;
 }
 
-void ModifyFilmList(FILE *fptr)
+void AddFilm(SagaList* sagaList, char* sagaName) 
 {
-    int searchBy, chooseToModify, index, choice;
-    char name[MAX];
-    char c; 
-    bool found = false;  
-    Film film, chosenFilm; 
-    
-    do
-    {
-        printf("1. Search and modify sepcific film\n2. Modify all films\n0. Go back\n");
-        scanf(" %d", &chooseToModify);
-        switch (chooseToModify)
-        {
-        case 1: 
-            break;
-        case 2:
-                printf("Scale all movies to be between 0 and 100\n");
-                printf("Are you sure you want to modify all films? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
-                scanf(" %c", &c);  // Note the space before %c to consume the newline character
-                if(c=='y') ScaleAllMovies(fptr); 
-                else printf("Films not modified!\n");
-                return; //exit the function
-            break; 
-        case 0:
-            Wait();
+    system("cls");
+    Film film;
+    char confirm; //confirmation for adding a film
+    // Check if the saga already exists
+    Saga* currentSaga = sagaList->head;
+    while (currentSaga != NULL) {
+        if (strcmp(currentSaga->name, sagaName) == 0) {
+            printf("Saga Found\n\nIndex: %d\nName: %s\n", currentSaga->index, currentSaga->name);
+            // Saga exists, add the film to it
+            printf("Do You Want to Add a Film to this Saga? (Y/N)\n");
+            scanf(" %c", &confirm);
+            if (confirm != 'Y' && confirm != 'y') {
+                return;
+            }
+            printf("Enter the Film Name: ");
+            scanf("%s", film.name);
+            printf("Enter the Genre: ");
+            scanf("%s", film.genre);
+            printf("Enter the Points: ");
+            scanf("%f", &film.points);
+            film.index = CountFilmsInSaga(*currentSaga) + 1;
+            FilmNode* newFilmNode = (FilmNode*)malloc(sizeof(FilmNode));
+            newFilmNode->film = film;
+            newFilmNode->next = currentSaga->films;
+            currentSaga->films = newFilmNode;
             return;
-            break;
-        default:
-            printf(COLOR_RED "Please Insert a Valid Option\n\n" COLOR_RESET);
-            break;
         }
-    }while(chooseToModify != 1); 
+        currentSaga = currentSaga->next;
+    }
 
-    do
-    {
-        system("cls"); //clear the terminal before starting the program
-        printf("1. Search movie by index\n2. Search movie by name\n0. Go back\n"); 
-        scanf(" %d", &searchBy); 
-        switch (searchBy)
-        {
-            case 1:
-                printf("Enter the index of the movie you want to modify: ");
-                scanf("%d", &index);
-                fflush(stdin);
-                // find the film with that index
-                while (fread(&film, sizeof(Film), 1, fptr) == 1)
-                {
-                    if (film.index == index)
-                    {
-                        chosenFilm = film;
-                        found = true;
-                        break; // Exit the loop once the film is found
-                    }
-                }
-                break;
+    // Saga doesn't exist, create a new saga and add it to the saga list
+    Saga* newSaga = (Saga*)malloc(sizeof(Saga));
+    strcpy(newSaga->name, sagaName);
+    newSaga->index = CountSagas(*sagaList) + 1;
+    printf("New Saga Created: %d. %s\n", newSaga->index, sagaName);
+    newSaga->films = NULL;
 
-            case 2:
-                printf("Enter the name of the movie you want to modify: ");
-                fflush(stdin);
-                fgets(name, MAX-1, stdin);
-                for(int i = 0; i < MAX; i++)
-                {
-                    if(name[i] == '\n')
-                    {
-                        name[i] = '\0';
-                        break;
-                    }
-                }
-                // find the film with that name
-                rewind(fptr); // Reset the file pointer to the beginning
-                while (fread(&film, sizeof(Film), 1, fptr) == 1)
-                {
-                    if (strcmp(film.name, name) == 0)
-                    {
-                        chosenFilm = film;
-                        found = true;
-                        break; // Exit the loop once the film is found
-                    }
-                }
-                break;
+    newSaga->next = sagaList->head;
+    sagaList->head = newSaga;
+    // Add the film to the new saga
+    FilmNode* newFilmNode = (FilmNode*)malloc(sizeof(FilmNode));
+    printf("Enter the Film Name: ");
+    scanf("%s", film.name);
+    printf("Enter the Genre: ");
+    scanf("%s", film.genre);
+    printf("Enter the Points: ");
+    scanf("%f", &film.points);
+    film.index = 1; //if there is no film in the saga, the index will be 1 since it's the only one
+    newFilmNode->film = film;
+    newFilmNode->next = newSaga->films;
+    newSaga->films = newFilmNode;
 
-            case 0:
-                Wait();
-                return;
-
-            default:
-                printf(COLOR_RED "Please Insert a Valid Option\n\n" COLOR_RESET);
-                break;
+    //write all sagas into a file
+    FILE* file = fopen("sagas.txt", "w");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    currentSaga = sagaList->head;
+    while (currentSaga != NULL) {
+        fprintf(file, "%s\n", currentSaga->name);
+        FilmNode* currentFilm = currentSaga->films;
+        while (currentFilm != NULL) {
+            fprintf(file, "%s %f %d\n", currentFilm->film.name, currentFilm->film.genre, currentFilm->film.points, currentFilm->film.index);
+            currentFilm = currentFilm->next;
         }
-    }while(searchBy < 0 || searchBy > 2);
+        currentSaga = currentSaga->next;
+    }
 
-    if(found == true)
+    fclose(file);
+}
+
+void GetSagaScore(SagaList *SagaList) 
+{
+    Saga* currentSaga = SagaList->head;
+    while (currentSaga != NULL) 
     {
-        printf(/*COLOR_GREEN*/ "Film found!\n" /*COLOR_RESET*/);
-        printf("Name: %s\nScore: %.1f\n", chosenFilm.name, chosenFilm.points);
-        printf("Do you want to modify this film? (y/n): ");
-        char confirm;
-        scanf("%c", &confirm);
-        fflush(stdin);
-        if(confirm == 'y')
+        FilmNode* currentFilm = currentSaga->films;
+        float totalPoints = 0;
+        int filmCount = 0;
+        while (currentFilm != NULL) 
         {
-            system("cls"); //clear the terminal before starting the program
-            printf("1. Modify name\n2. Modify score\n3. Delete film\n");
-            scanf("%d", &choice);
-            fflush(stdin);
-            switch(choice)
+            totalPoints += currentFilm->film.points;
+            filmCount++;
+            currentFilm = currentFilm->next;
+        }
+        currentSaga->score = totalPoints / filmCount;
+        currentSaga = currentSaga->next;
+    }
+}
+
+void WriteSagasIntoWatchlistFile() 
+{
+    FILE *file = fopen("lab_watchlist.txt", "wb");
+    FILE *sagaFile = fopen("sagas.txt", "r");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    if (sagaFile == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    //order sagas by score
+    SagaList sagaList;
+    //get saga list from sagas.txt
+    char sagaName[MAX];
+    while (fscanf(sagaFile, "%s", sagaName) != EOF) 
+    {
+        AddFilm(&sagaList, sagaName);
+    }
+    GetSagaScore(&sagaList);
+    //sort sagas by score
+    Saga* currentSaga = sagaList.head;
+    while (currentSaga != NULL) 
+    {
+        Saga* nextSaga = currentSaga->next;
+        while (nextSaga != NULL) 
+        {
+            if (currentSaga->score < nextSaga->score) 
             {
-                case 1:
-                    //print chosen film name
-                    printf("Chosen film name: %s\n", chosenFilm.name); 
-                    printf("Enter the new name: ");
-                    fgets(chosenFilm.name, MAX-1, stdin);
-                    for(int i = 0; i < MAX; i++)
-                    {
-                        if(chosenFilm.name[i] == '\n')
-                        {
-                            chosenFilm.name[i] = '\0';
-                            break;
-                        }
-                    }
-                    fseek(fptr, -sizeof(Film), SEEK_CUR); // Move the file pointer back to the correct position
-                    fwrite(&chosenFilm, sizeof(Film), 1, fptr);
-                    printf(/*COLOR_GREEN*/ "Film name modified!\n" /*COLOR_RESET*/);
-                    return; //exit the function
-                    break; 
-                case 2:
-                    printf("Enter the new score: ");
-                    scanf("%f", &chosenFilm.points);
-                    fseek(fptr, -sizeof(Film), SEEK_CUR); // Move the file pointer back to the correct position
-                    fwrite(&chosenFilm, sizeof(Film), 1, fptr);
-                    printf(/*COLOR_GREEN*/ "Film score modified!\n" /*COLOR_RESET*/);
-                    return; //exit the function
-                    break;
-                case 3:
-                    printf(/*COLOR_YELLOW*/ "Are you sure you want to delete this film? (y/n):" /*COLOR_RED*/ "\nYOU CANNOT UNDO THIS ACTION\n" /*COLOR_RESET*/);
-                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
-                    fflush(stdin);
-
-                    if (confirm == 'y') 
-                    {
-                        //printf("There are %d elements in the file\n", CountElements(fptr));
-                        int numFilms = CountElements(fptr);
-                        Film newFilms[numFilms-1];
-                        //write all the films except the one to be deleted to a new array
-                        rewind(fptr);
-                        int i = 0;
-                        while(fread(&film, sizeof(Film), 1, fptr) == 1)
-                        {
-                            if(film.index != chosenFilm.index)
-                            {
-                                newFilms[i] = film;
-                                i++;
-                            }
-                        }
-                        //write the new array to the file
-                        fclose(fptr);
-                        fptr = fopen("watchlist.txt", "wb");
-                        for(int i = 0; i < numFilms-1; i++)
-                        {
-                            newFilms[i].index = i+1;
-                            fwrite(&newFilms[i], sizeof(Film), 1, fptr);
-                        }
-                        printf(/*COLOR_GREEN*/ "Film deleted!\n" /*COLOR_RESET*/);
-                        return; //exit the function
-                    } else {
-                        printf(/*COLOR_BLUE*/ "Film not deleted!\n" /*COLOR_RESET*/);
-                    }
-                    break;
-
-                default:
-                    printf(/*COLOR_MAGENTA*/ "Invalid option!\n" /*COLOR_RESET*/);
-                    break;
+                Saga temp = *currentSaga;
+                *currentSaga = *nextSaga;
+                *nextSaga = temp;
             }
+            nextSaga = nextSaga->next;
         }
+        currentSaga = currentSaga->next;
     }
-    else printf(/*COLOR_RED*/ "Film not found!\n" /*COLOR_RESET*/);
-}
-
-void CheckGameList(FILE *fptr)
-{
-    Game game;
-    while(fread(&game, sizeof(Game), 1, fptr) == 1)
+    //uotput ordered sagas to watchlist file
+    currentSaga = sagaList.head;
+    if(currentSaga == NULL)
     {
-        printf("%d. %s\nScore: %.1f\n\n", game.index, game.name, game.points);
+        fprintf(file, "The List Is Empty\nGo Add Some Films\n");
+        return;
     }
-}
-
-void AddGameToList(FILE *fptr)
-{
-    Game game; 
-    printf("Enter the name of the game: ");
-    fgets(game.name, MAX-1, stdin);
-    for(int i = 0; i < MAX; i++)
+    while (currentSaga != NULL)  //rember to change formatting based on if the saga has more than one film ---------------------
     {
-        if(game.name[i] == '\n')
+        fprintf(file, "%s\n", currentSaga->name);
+        FilmNode* currentFilm = currentSaga->films;
+        while (currentFilm != NULL) 
         {
-            game.name[i] = '\0';
-            break;
+            fprintf(file, "%d %s %s %f\n", currentFilm->film.index, currentFilm->film.name, currentFilm->film.genre, currentFilm->film.points);
+            currentFilm = currentFilm->next;
         }
+        currentSaga = currentSaga->next;
     }
-    printf("Enter the score of the game: ");
-    scanf("%f", &game.points);
-    //fprintf(fptr, "%s %f\n", film.name, film.points);
-    fwrite(&game, sizeof(Game), 1, fptr);
-}
-
-void ModifyGameList(FILE *fptr)
-{
-    int searchBy, chooseToModify, index, choice;
-    char name[MAX];
-    char c; 
-    bool found = false;  
-    Game game, chosenGame; 
     
-    do
-    {
-        printf("1. Search and modify sepcific game\n2. Modify all games\n0. Go back\n");
-        scanf(" %d", &chooseToModify);
-        switch (chooseToModify)
-        {
-        case 1: 
-            break;
-        case 2:
-                printf("Scale all game scores to be between 0 and 100\n");
-                printf("Are you sure you want to modify all games? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
-                scanf(" %c", &c);  // Note the space before %c to consume the newline character
-                if(c=='y') ScaleAllGames(fptr); 
-                else printf("Games not modified!\n");
-                return; //exit the function
-            break; 
-        default:
-            printf("Please Insert a Valid Option\n\n");
-            break;
-        }
-    }while(chooseToModify != 1); 
+    fclose(file);
+    fclose(sagaFile);
 
-    do
-    {
-        printf("1. Search game by index\n2. Search game by name\n0. Go back\n"); 
-        scanf(" %d", &searchBy); 
-        switch (searchBy)
-        {
-            case 1:
-                printf("Enter the index of the game you want to modify: ");
-                scanf("%d", &index);
-                fflush(stdin);
-                // find the film with that index
-                while (fread(&game, sizeof(Game), 1, fptr) == 1)
-                {
-                    if (game.index == index)
-                    {
-                        chosenGame = game;
-                        found = true;
-                        break; // Exit the loop once the film is found
-                    }
-                }
-                break;
-
-            case 2:
-                printf("Enter the name of the game you want to modify: ");
-                fflush(stdin);
-                fgets(name, MAX-1, stdin);
-                for(int i = 0; i < MAX; i++)
-                {
-                    if(name[i] == '\n')
-                    {
-                        name[i] = '\0';
-                        break;
-                    }
-                }
-                // find the film with that name
-                rewind(fptr); // Reset the file pointer to the beginning
-                while (fread(&game, sizeof(Game), 1, fptr) == 1)
-                {
-                    if (strcmp(game.name, name) == 0)
-                    {
-                        chosenGame = game;
-                        found = true;
-                        break; // Exit the loop once the film is found
-                    }
-                }
-                break;
-
-            case 0:
-                Wait();
-                return;
-
-            default:
-                printf("Please Insert a Valid Option\n\n");
-                break;
-        }
-    }while(searchBy < 0 || searchBy > 2);
-
-    if(found == true)
-    {
-        printf("Film found!\n");
-        printf("Name: %s\nScore: %.1f\n", chosenGame.name, chosenGame.points);
-        printf("Do you want to modify this film? (y/n): ");
-        char confirm;
-        scanf("%c", &confirm);
-        fflush(stdin);
-        if(confirm == 'y')
-        {
-            printf("1. Modify name\n2. Modify score\n3. Delete game\n");
-            scanf("%d", &choice);
-            fflush(stdin);
-            switch(choice)
-            {
-                case 1:
-                    //print chosen film name
-                    printf("Chosen game name: %s\n", chosenGame.name); 
-                    printf("Enter the new name: ");
-                    fgets(chosenGame.name, MAX-1, stdin);
-                    for(int i = 0; i < MAX; i++)
-                    {
-                        if(chosenGame.name[i] == '\n')
-                        {
-                            chosenGame.name[i] = '\0';
-                            break;
-                        }
-                    }
-                    fseek(fptr, -sizeof(Game), SEEK_CUR); // Move the file pointer back to the correct position
-                    fwrite(&chosenGame, sizeof(Game), 1, fptr);
-                    printf("Game name modified!\n");
-                    return; //exit the function
-                    break; 
-                case 2:
-                    printf("Enter the new score: ");
-                    scanf("%f", &chosenGame.points);
-                    fseek(fptr, -sizeof(Game), SEEK_CUR); // Move the file pointer back to the correct position
-                    fwrite(&chosenGame, sizeof(Game), 1, fptr);
-                    printf("Game score modified!\n");
-                    return; //exit the function
-                    break;
-                case 3:
-                    printf("Are you sure you want to delete this film? (y/n):\nYOU CANNOT UNDO THIS ACTION\n");
-                    scanf(" %c", &confirm);  // Note the space before %c to consume the newline character
-                    fflush(stdin);
-
-                    if (confirm == 'y') 
-                    {
-                        //printf("There are %d elements in the file\n", CountElements(fptr));
-                        int numGames = CountGames(fptr);
-                        Game newGames[numGames-1];
-                        //write all the films except the one to be deleted to a new array
-                        rewind(fptr);
-                        int i = 0;
-                        while(fread(&game, sizeof(Game), 1, fptr) == 1)
-                        {
-                            if(game.index != chosenGame.index)
-                            {
-                                newGames[i] = game;
-                                i++;
-                            }
-                        }
-                        //write the new array to the file
-                        fclose(fptr);
-                        fptr = fopen("gamelist.txt", "wb");
-                        for(int i = 0; i < numGames-1; i++)
-                        {
-                            newGames[i].index = i+1;
-                            fwrite(&newGames[i], sizeof(Game), 1, fptr);
-                        }
-                        printf("Game deleted!\n");
-                        return; //exit the function
-                    } else {
-                        printf("Game not deleted!\n");
-                    }
-                    break;
-
-                default:
-                    printf("Invalid option!\n");
-                    break;
-            }
-        }
-    }
-    else printf("Game not found!\n");
+    return; 
 }
 
-void CreateFileIfNotExisting(char* filename)
+void ViewWatchlist() 
 {
-    FILE *file;
-    file = fopen(filename, "rb");
-    if(file == NULL)
+    FILE *file = fopen("lab_watchlist.txt", "r");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+    char line[MAX];
+    while (fgets(line, MAX, file) != NULL) 
     {
-        file = fopen(filename, "wb");
-        fclose(file);
-    } 
-    else
-    {
-        fclose(file);
-    }   
+        printf("%s", line);
+    }
+    fclose(file);
 }
 
 int main()
 {
-    system("cls"); //clear the terminal before starting the program
+    //initialize the saga list
+    SagaList* sagaList = (SagaList*)malloc(sizeof(SagaList));
+    sagaList->head = NULL;
+    int choice = 0;
+    char userInput[MAX]; //used to get the name of the saga/film
 
-    FILE *filmFile, *gameFile;
-    int choice; 
-    char confirm;
-
-    CreateFileIfNotExisting("watchlist.txt");
-    CreateFileIfNotExisting("gamelist.txt");
-
+    printf("What would you like to do?\n\n1. Check Film List\n2. Add a Film\n3. Modify List\n0. Exit\n");
+    scanf("%d", &choice);
     do
     {
-        printf("What would you like to do?\n\n1. Check Film List\n2. Add Film to watchlist\n3. Modify Film\n\n4. Check Game List\n5. Add Game to game list\n6. Modify Game\n\n0. Quit\n");
-        scanf("%d", &choice);
-        fflush(stdin);
-        switch(choice)
+        switch (choice)
         {
-            case 0: 
-                printf("===================================================\nEXITING PROGRAM NOW\n===================================================\n");
-                printf(COLOR_MAGENTA "PRESS ENTER TO TERMINATE EXECUTION\n===================================================\n" COLOR_RESET);
-                censor = 1;
-                Wait();
-            break; 
-            case 1: 
-                system("cls"); //clear the terminal before starting the program
-                filmFile = fopen("watchlist.txt", "r+b");
-                OrderByIndex(filmFile);
-                fclose(filmFile);
-                filmFile = fopen("watchlist.txt", "rb");
-                CheckFilmList(filmFile); 
-                fclose(filmFile);
-                Wait(); 
-            break; 
-            case 2: 
-                system("cls"); //clear the terminal before starting the program
-                filmFile = fopen("watchlist.txt", "ab"); 
-                AddFilmToList(filmFile);
-                fclose(filmFile);
-                Wait();  
-            break; 
-            case 3: 
-                system("cls"); //clear the terminal before starting the program
-                filmFile = fopen("watchlist.txt", "r+b");
-                ModifyFilmList(filmFile);
-                fclose(filmFile);
-                Wait(); 
-            break;  
-            case 4: 
-                system("cls"); //clear the terminal before starting the program
-                gameFile = fopen("gamelist.txt", "r+b"); 
-                OrderByIndex(gameFile);
-                fclose(gameFile);
-                gameFile = fopen("gamelist.txt", "rb"); 
-                CheckGameList(gameFile); 
-                fclose(gameFile); 
-                Wait(); 
-            break; 
-            case 5: 
-                system("cls"); //clear the terminal before starting the program
-                gameFile = fopen("gamelist.txt", "ab"); 
-                AddGameToList(gameFile);
-                fclose(gameFile); 
-                Wait();  
-            break; 
-            case 6: 
-                system("cls"); //clear the terminal before starting the program
-                gameFile = fopen("gamelist.txt", "r+b");
-                ModifyGameList(gameFile); 
-                fclose(gameFile);
-                Wait(); 
-            break; 
+            case 1:
+                system("cls");
+                ViewWatchlist();
+                break;
+            case 2:
+                system("cls"); 
+                printf("Enter The Name of The Saga/Film: \n");
+                scanf("%s", userInput);
+                AddFilm(sagaList, userInput);
+                break;
+            case 3:
+                printf("Modifying List\n");
+                break;
             default:
-                system("cls"); //clear the terminal before starting the program
-                printf("===================================================\n!ERROR!\nPlease Enter a valid option\n===================================================\n");
-                Wait();
-            break; 
+                printf("Invalid choice\n");
+                break;
         }
-    }while(choice!=0);
+        printf("What would you like to do?\n\n1. Check Film List\n2. Add a Film\n3. Modify List\n0. Exit\n");
+        scanf("%d", &choice);
+    }while(choice!=0); 
 
     return 0; 
 }

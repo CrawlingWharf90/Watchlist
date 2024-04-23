@@ -77,6 +77,7 @@ void AddFilmToList(FILE *fptr)
     {
         printf("Is this film part of a saga? [y/n]: ");
         scanf(" %c", &answer); //get the answer of the user
+        fflush(stdin);
         if(answer == 'y' || answer == 'Y') //if the answer is yes
         {
             film.isSaga = true; //set the film as part of a saga

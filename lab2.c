@@ -53,6 +53,7 @@ Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
     while(!feof(fptr))
     {
         fread(&film, sizeof(Film), 1, fptr);
+        perror("Error: ");
         printf("%s -> %s\n", film.sagaName, sagaName);
         if(strcmp(film.sagaName, sagaName) == 0)
         {
@@ -91,7 +92,12 @@ void AddFilmToList(FILE *fptr)
             film.isSaga = true; //set the film as part of a saga
             printf("Enter the name of the saga: ");
             fgets(film.sagaName, MAX, stdin); //get the name of the saga
+            fseek(fptr, 0, SEEK_SET);
+            fclose(fptr);
+            fptr = fopen("lab_watchlist.txt", "rb+"); //open the file in read mode
             saga = SearchIfSagaExistsInFile(fptr, film.sagaName); 
+            fclose(fptr);
+            fptr = fopen("lab_watchlist.txt", "ab+"); //open the file in append mode
             if(sagaExists) //search if the saga exists in the file
             {
                 printf(COLOR_GREEN "Saga Found\n\nName:" COLOR_RESET " %s\n", saga.sagaName);
@@ -106,6 +112,7 @@ void AddFilmToList(FILE *fptr)
         else
         {
             film.isSaga = false; //set the film as not part of a saga
+            for(int i=0; i<strlen(film.name); i++) film.sagaName[i] = film.name[i]; //set the name of the saga as the name of the film
             film.ID = CountFilmsInFile(fptr) + 1; //set the ID of the film as the number of films in the file
             film.sagaPoints = film.points; //set the points of the saga as the points of the film
         }
@@ -117,6 +124,8 @@ void AddFilmToList(FILE *fptr)
     //add the film to the file
     fwrite(&film, sizeof(Film), 1, fptr);
     printf(COLOR_GREEN "Film Added Successfully\n" COLOR_RESET);
+
+    fclose(fptr);
 }
 
 void Wait() //short function to return to the menu
@@ -160,6 +169,8 @@ void PrintListInTermianl(FILE *fptr)
         printf("===================================================\n");
     }
 
+    fseek(fptr, 0, SEEK_SET);
+
     Wait();
     return;
 }
@@ -197,16 +208,41 @@ int main()
                 system("cls");
                 movies = fopen(filmfilename, "ab"); 
                 AddFilmToList(movies);
-                fclose(movies);
                 Wait(); 
             break; 
             case 3: 
                 
             break;  
+            case 2303: 
+                system("cls");
+                printf("===================================================\nWelcome to the Secret Debugging Menu\n===================================================\n");
+                int debug;
+                do
+                {
+                    printf("What would you like to do?\n\n1. Delete Film List\n\n0. Go Back\n");
+                    scanf("%d", &debug);
+                    fflush(stdin);
+                    switch(debug)
+                    {
+                        case 0: 
+                            system("cls");
+                        break;
+
+                        case 1: 
+                            system("cls");
+                            movies = fopen(filmfilename, "wb"); 
+                            fclose(movies);
+                            printf("===================================================\nFilm List Deleted\n===================================================\n");
+                            Wait(); 
+                        default:
+                            printf("===================================================\n!ERROR!\nPlease Enter a valid option\n===================================================\n");
+                        break;
+                    }
+                }while(debug!=0);
             default:
                 system("cls");
                 printf("===================================================\n!ERROR!\nPlease Enter a valid option\n===================================================\n");
-                Wait();
+                Wait(); 
             break; 
         }
     }while(choice!=0);

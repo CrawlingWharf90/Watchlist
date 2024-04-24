@@ -48,8 +48,12 @@ int CountFilmsInFile(FILE *fptr)
 Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
 {
     Film film;
-    while(fread(&film, sizeof(Film), 1, fptr))
+    rewind(fptr);
+    printf("Checking if the saga exists\n\n");
+    while(!feof(fptr))
     {
+        fread(&film, sizeof(Film), 1, fptr);
+        printf("%s -> %s\n", film.sagaName, sagaName);
         if(strcmp(film.sagaName, sagaName) == 0)
         {
             film.sagaLength++;

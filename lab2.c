@@ -14,6 +14,10 @@
 #define COLOR_CYAN    "\e[36m"
 #define COLOR_RESET   "\e[0m"
 
+/*TO FIX:
+SAGA LENGTH DOESN'T INDICATE THE ACTUAL SAGA LENGTH
+ALL MOVIES HAVE THE SAME ID, ONLY MOVIES IN THE SAME SAGA SHOULD HAVE THE SAME ID, DIFFRENT SAGAS SHOULD HAVE DIFFRENT IDs*/
+
 typedef struct
 {
     int ID; //movies with the same ID are part of the same saga
@@ -134,6 +138,28 @@ void CreateFileIfNotExisting(char* filename)
     }   
 }
 
+void PrintListInTermianl(FILE *fptr)
+{
+    Film film;
+    while(fread(&film, sizeof(Film), 1, fptr))
+    {
+        printf("Name: %s\n", film.name);
+        printf("Genre: %s\n", film.genre);
+        printf("Points: %.2f\n", film.points);
+        if(film.isSaga)
+        {
+            printf("Saga: %s\n", film.sagaName);
+            printf("Saga Points: %.2f\n", film.sagaPoints);
+            printf("Number of Films in Saga: %d\n", film.sagaLength);
+        }
+        printf("ID: %d\n", film.ID);
+        printf("===================================================\n");
+    }
+
+    Wait();
+    return;
+}
+
 int main()
 {
     system("cls"); // clear the terminal before strating the program
@@ -158,7 +184,10 @@ int main()
                 Wait();
             break; 
             case 1: 
-                
+                system("cls");
+                movies = fopen(filmfilename, "rb"); 
+                PrintListInTermianl(movies);
+                fclose(movies);
             break; 
             case 2: 
                 system("cls");

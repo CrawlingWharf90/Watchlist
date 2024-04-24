@@ -17,6 +17,7 @@
 /*TO FIX:
 SAGA LENGTH DOESN'T INDICATE THE ACTUAL SAGA LENGTH
 ALL MOVIES HAVE THE SAME ID, ONLY MOVIES IN THE SAME SAGA SHOULD HAVE THE SAME ID, DIFFRENT SAGAS SHOULD HAVE DIFFRENT IDs*/
+//saga len is never initialized to 0 that's why it's giving random values
 
 typedef struct
 {
@@ -92,6 +93,7 @@ void AddFilmToList(FILE *fptr)
             film.isSaga = true; //set the film as part of a saga
             printf("Enter the name of the saga: ");
             fgets(film.sagaName, MAX, stdin); //get the name of the saga
+            fflush(stdin);
             fseek(fptr, 0, SEEK_SET);
             fclose(fptr);
             fptr = fopen("lab_watchlist.txt", "rb+"); //open the file in read mode
@@ -113,6 +115,8 @@ void AddFilmToList(FILE *fptr)
         {
             film.isSaga = false; //set the film as not part of a saga
             for(int i=0; i<strlen(film.name); i++) film.sagaName[i] = film.name[i]; //set the name of the saga as the name of the film
+            fclose(fptr);
+            fptr = fopen("lab_watchlist.txt", "ab+"); //open the file in append mode
             film.ID = CountFilmsInFile(fptr) + 1; //set the ID of the film as the number of films in the file
             film.sagaPoints = film.points; //set the points of the saga as the points of the film
         }
@@ -219,7 +223,7 @@ int main()
                 int debug;
                 do
                 {
-                    printf("What would you like to do?\n\n1. Delete Film List\n\n0. Go Back\n");
+                    printf("What would you like to do?\n\n1. Delete Film List\n2.Count Films in FIle\n\n0. Go Back\n");
                     scanf("%d", &debug);
                     fflush(stdin);
                     switch(debug)
@@ -233,7 +237,17 @@ int main()
                             movies = fopen(filmfilename, "wb"); 
                             fclose(movies);
                             printf("===================================================\nFilm List Deleted\n===================================================\n");
-                            Wait(); 
+                            Wait();   
+                        break;
+
+                        case 2: 
+                            system("cls");
+                            movies = fopen(filmfilename, "rb+"); 
+                            printf("Number of Films in File: %d\n", CountFilmsInFile(movies));
+                            fclose(movies);
+                            Wait();
+                        break;
+                        
                         default:
                             printf("===================================================\n!ERROR!\nPlease Enter a valid option\n===================================================\n");
                         break;
@@ -244,7 +258,7 @@ int main()
                 printf("===================================================\n!ERROR!\nPlease Enter a valid option\n===================================================\n");
                 Wait(); 
             break; 
-        }
+        }//end of switch
     }while(choice!=0);
 
     system("cls"); 

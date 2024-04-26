@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 
-#define MAX 40
+#define MAX 250 //considering that the film with the longest name in the world has 222 characters
 //set colors for the terminal
 #define COLOR_RED     "\e[91m"
 #define COLOR_GREEN   "\e[32m"
@@ -46,6 +46,16 @@ int CountFilmsInFile(FILE *fptr)
     return count;
 }
 
+int GetSagaLenght(FILE *fptr, Film film)
+{
+    Film temp;
+    int sagaLength = 0; //initialize the length of the saga
+    while(fread(&temp, sizeof(Film), 1, fptr))
+    {
+        if(temp.ID == film.ID) sagaLength++; //increment the length of the saga
+    }
+}
+
 Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
 {
     Film film;
@@ -54,11 +64,11 @@ Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
     while(!feof(fptr))
     {
         fread(&film, sizeof(Film), 1, fptr);
-        perror("Error: ");
-        printf("%s -> %s\n", film.sagaName, sagaName);
+        //perror("Error: ");
+        //printf("%s -> %s\n", film.sagaName, sagaName);
         if(strcmp(film.sagaName, sagaName) == 0)
         {
-            film.sagaLength++;
+            rewind(fptr);
             film.sagaPoints += film.points;
             film.points = film.sagaPoints / film.sagaLength;
             fseek(fptr, -sizeof(Film), SEEK_CUR);

@@ -54,6 +54,8 @@ int GetSagaLenght(FILE *fptr, Film film)
     {
         if(temp.ID == film.ID) sagaLength++; //increment the length of the saga
     }
+
+    return sagaLength + 1;
 }
 
 Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
@@ -120,6 +122,16 @@ void AddFilmToList(FILE *fptr)
                 printf("Saga Not Found\n\nCreating a new Saga\n\n");
                 film.ID = CountFilmsInFile(fptr) + 1; //set the ID of the film as the number of films in the file
             }
+
+            film.sagaLength = GetSagaLenght(fptr, film); //get the length of the saga
+            rewind(fptr);
+            for(int i=0; i<CountFilmsInFile(fptr); i++) //set the saga lenghts to be the same for all the films in the saga
+            {
+                Film temp;
+                fread(&temp, sizeof(Film), 1, fptr);
+                printf("%s: %d -> %s: %d\n", temp.name, temp.ID, film.name, film.ID);
+                if(temp.ID == film.ID) temp.sagaLength = film.sagaLength;
+            }
         }
         else
         {
@@ -128,6 +140,7 @@ void AddFilmToList(FILE *fptr)
             fclose(fptr);
             fptr = fopen("lab_watchlist.txt", "ab+"); //open the file in append mode
             film.ID = CountFilmsInFile(fptr) + 1; //set the ID of the film as the number of films in the file
+            film.sagaLength = GetSagaLenght(fptr, film); //get the length of the saga
             film.sagaPoints = film.points; //set the points of the saga as the points of the film
         }
         
@@ -168,6 +181,8 @@ void CreateFileIfNotExisting(char* filename)
 void PrintListInTermianl(FILE *fptr)
 {
     Film film;
+    //get saga length for each movie
+
     while(fread(&film, sizeof(Film), 1, fptr))
     {
         printf("Name: %s\n", film.name);

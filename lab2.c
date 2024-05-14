@@ -84,6 +84,19 @@ Film SearchIfSagaExistsInFile(FILE *fptr, char* sagaName)
     return film;
 }
 
+void ResetSagaCounter(int num, int ID, FILE *fptr)
+{
+    Film film;
+    for(int i=0; i<CountFilmsInFile(fptr); i++)
+    {
+        fread(&film, sizeof(Film), 1, fptr);
+        if(film.ID == ID) film.sagaLength = num;
+        fseek(fptr, -sizeof(Film), SEEK_CUR);
+        fwrite(&film, sizeof(Film), 1, fptr);
+    
+    }
+}
+
 void AddFilmToList(FILE *fptr)
 {
     Film film; //create a film object
@@ -124,14 +137,9 @@ void AddFilmToList(FILE *fptr)
             }
 
             film.sagaLength = GetSagaLenght(fptr, film); //get the length of the saga
-            rewind(fptr);
-            for(int i=0; i<CountFilmsInFile(fptr); i++) //set the saga lenghts to be the same for all the films in the saga
-            {
-                Film temp;
-                fread(&temp, sizeof(Film), 1, fptr);
-                printf("%s: %d -> %s: %d\n", temp.name, temp.ID, film.name, film.ID);
-                if(temp.ID == film.ID) temp.sagaLength = film.sagaLength;
-            }
+            fclose(fptr); //close the file
+            fptr = fopen("lab_watchlist.txt", "ab+");
+            ResetSagaCounter(film.sagaLength, film.ID, fptr); //memory leak?
         }
         else
         {
